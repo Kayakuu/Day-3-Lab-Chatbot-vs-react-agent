@@ -1,7 +1,9 @@
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
@@ -9,6 +11,8 @@ from pydantic import BaseModel, Field
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 BUS_SCHEDULES_PATH = DATA_DIR / "bus_schedules.json"
 OPERATORS_PATH = DATA_DIR / "operators.json"
+
+VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
 _MISSING_OD_MSG = (
     "Lỗi: Thiếu điểm đi hoặc điểm đến. "
@@ -21,6 +25,10 @@ _NO_MATCH_MSG = (
 _OPERATOR_NOT_FOUND_MSG = (
     "Lỗi: Mã nhà xe '{company_id}' không tồn tại trong hệ thống. "
     "Hãy kiểm tra lại thông tin chuyến xe."
+)
+_DATETIME_ERROR_MSG = (
+    "Lỗi: Không thể lấy được thời gian hệ thống. "
+    "Hãy yêu cầu người dùng cung cấp cụ thể ngày giờ họ muốn đi thay vì nói 'hôm nay'."
 )
 
 
@@ -135,6 +143,23 @@ def get_bus_operator_info(company_id: str) -> str:
         return _OPERATOR_NOT_FOUND_MSG.format(company_id=cid)
 
     return json.dumps({"company_id": cid, **record}, ensure_ascii=False)
+
+
+@tool("get_current_datetime")
+def get_current_datetime() -> str:
+    """Return the current date and time in Vietnam timezone (Asia/Ho_Chi_Minh).
+
+    Call this FIRST whenever the user uses relative time expressions such as
+    "hôm nay", "ngày mai", "tối nay", "sắp tới", or "bây giờ", so that other
+    tools can be called with a concrete YYYY-MM-DD date.
+
+    Returns a string formatted as 'YYYY-MM-DD HH:MM:SS', or a Vietnamese
+    fallback message on failure.
+    """
+    try:
+        return datetime.now(VN_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return _DATETIME_ERROR_MSG
 
 
 class BusBookingTools:
