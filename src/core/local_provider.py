@@ -1,84 +1,57 @@
 import time
 import os
 from typing import Dict, Any, Optional, Generator
-from llama_cpp import Llama
+from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage, SystemMessage
 from src.core.llm_provider import LLMProvider
 
 class LocalProvider(LLMProvider):
     """
-    LLM Provider for local models using llama-cpp-python.
-    Optimized for CPU usage with GGUF models.
+    LLM Provider for local models using LangChain and Ollama.
     """
-    def __init__(self, model_path: str, n_ctx: int = 4096, n_threads: Optional[int] = None):
-        """
-        Initialize the local Llama model.
-        Args:
-            model_path: Path to the .gguf model file.
-            n_ctx: Context window size.
-            n_threads: Number of CPU threads to use. Defaults to all available.
-        """
-        super().__init__(model_name=os.path.basename(model_path))
+    def __init__(self, model_name: str = "qwen2.5", base_url: str = "http://localhost:11434", temperature: float = 0):
+        super().__init__(model_name=model_name)
         
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found at {model_path}. Please download it first.")
-
-        # n_threads=None will use all available cores
-        self.llm = Llama(
-            model_path=model_path,
-            n_ctx=n_ctx,
-            n_threads=n_threads,
-            verbose=False
+        self.llm = ChatOllama(
+            model=model_name,
+            base_url=base_url,
+            temperature=temperature
         )
 
     def generate(self, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
         start_time = time.time()
         
-        # Phi-3 / Llama-3 style formatting if not handled by a template
-        full_prompt = prompt
+        messages = []
         if system_prompt:
-            full_prompt = f"<|system|>\n{system_prompt}<|end|>\n<|user|>\n{prompt}<|end|>\n<|assistant|>"
-        else:
-            full_prompt = f"<|user|>\n{prompt}<|end|>\n<|assistant|>"
+            messages.append(SystemMessage(content=system_prompt))
+        messages.append(HumanMessage(content=prompt))
 
-        response = self.llm(
-            full_prompt,
-            max_tokens=1024,
-            stop=["<|end|>", "Observation:"],
-            echo=False
-        )
+        response = self.llm.invoke(messages)
 
         end_time = time.time()
         latency_ms = int((end_time - start_time) * 1000)
 
-        content = response["choices"][0]["text"].strip()
         usage = {
-            "prompt_tokens": response["usage"]["prompt_tokens"],
-            "completion_tokens": response["usage"]["completion_tokens"],
-            "total_tokens": response["usage"]["total_tokens"]
+            "prompt_tokens": response.response_metadata.get("prompt_eval_count", 0),
+            "completion_tokens": response.response_metadata.get("eval_count", 0),
+            "total_tokens": response.response_metadata.get("prompt_eval_count", 0) + response.response_metadata.get("eval_count", 0)
         }
 
         return {
-            "content": content,
+            "content": response.content,
             "usage": usage,
             "latency_ms": latency_ms,
-            "provider": "local"
+            "provider": f"ollama-{self.model_name}"
         }
 
     def stream(self, prompt: str, system_prompt: Optional[str] = None) -> Generator[str, None, None]:
-        full_prompt = prompt
+        messages = []
         if system_prompt:
-            full_prompt = f"<|system|>\n{system_prompt}<|end|>\n<|user|>\n{prompt}<|end|>\n<|assistant|>"
-        else:
-            full_prompt = f"<|user|>\n{prompt}<|end|>\n<|assistant|>"
+            messages.append(SystemMessage(content=system_prompt))
+        messages.append(HumanMessage(content=prompt))
 
-        stream = self.llm(
-            full_prompt,
-            max_tokens=1024,
-            stop=["<|end|>", "Observation:"],
-            stream=True
-        )
+        stream = self.llm.stream(messages)
 
         for chunk in stream:
-            token = chunk["choices"][0]["text"]
-            if token:
-                yield token
+            if chunk.content:
+                yield chunk.content
