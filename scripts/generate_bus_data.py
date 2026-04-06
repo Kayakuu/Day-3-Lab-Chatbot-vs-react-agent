@@ -3,61 +3,49 @@ import random
 import os
 from datetime import datetime, timedelta
 
+def load_data():
+    with open('data/mock_distances.json', 'r', encoding='utf-8') as f:
+        distances = json.load(f)
+    with open('data/operators.json', 'r', encoding='utf-8') as f:
+        operators = json.load(f)
+    return distances, operators
+
 def generate_bus_data(num_records=100):
-    cities = ["Hà Nội", "Sài Gòn", "Đà Nẵng", "Đà Lạt", "Sa Pa", "Nha Trang", "Hải Phòng", "Huế", "Hội An"]
-    companies = ["Phương Trang", "Thành Bưởi", "Hải Vân", "Sao Việt", "Hoàng Long", "Gia Nguyễn"]
+    distances, operators = load_data()
     vehicle_types = ["Xe giường nằm (Sleeper)", "Xe ghế ngồi (Standard)", "Limousine VIP"]
     
-    # Real-world detailed policies for each company
-    detailed_policies = {
-        "Phương Trang": "Hủy trước 24h hoàn 90%. Hủy từ 12-24h hoàn 50%. Sau 12h không hoàn tiền. Hành lý tối đa 20kg. Miễn phí nước uống và khăn lạnh.",
-        "Thành Bưởi": "Miễn phí hủy vé trước 24h. Hủy trong vòng 24h thu phí 50%. Hỗ trợ xe trung chuyển miễn phí trong bán kính 5km. Có chăn đắp và tai nghe.",
-        "Sao Việt": "Hủy trước 12h hoàn 80%. Hủy dưới 12h không hoàn tiền. Hỗ trợ đón trả khách tận nơi tại Phố Cổ Hà Nội và trung tâm Sa Pa. Xe đời mới, cổng sạc USB.",
-        "Hải Vân": "Hủy trước 4h hoàn vé 90%. Sau 4h không hoàn tiền. Xe hạng thương gia có ghế massage, miễn phí ăn nhẹ và đồ uống cao cấp.",
-        "Hoàng Long": "Hủy trước 24h hoàn 90%. Hủy dưới 24h hoàn 70%. Tuyến Bắc Nam bao gồm suất ăn nóng tại các trạm dừng chân riêng của hãng.",
-        "Gia Nguyễn": "Hủy trước 2h thu phí 30%. Hỗ trợ đón/trả khách tại Sân bay Đà Nẵng và các khách sạn trung tâm Hội An. Xe sạch sẽ, tài xế thân thiện."
-    }
-    
-    data = []
-    
-    # Distance in km for time calculation (internally used)
-    routes = {
-        ("Hà Nội", "Sa Pa"): 320,
-        ("Hà Nội", "Đà Nẵng"): 760,
-        ("Hà Nội", "Hải Phòng"): 120,
-        ("Sài Gòn", "Đà Lạt"): 310,
-        ("Sài Gòn", "Nha Trang"): 430,
-        ("Đà Nẵng", "Huế"): 100,
-        ("Đà Nẵng", "Hội An"): 30,
-        ("Sài Gòn", "Đà Nẵng"): 960,
-    }
+    # Extract all valid routes from distance matrix
+    routes = []
+    for origin, dests in distances.items():
+        for dest, km in dests.items():
+            routes.append((origin, dest, km))
+            routes.append((dest, origin, km))
+            
+    operator_keys = list(operators.keys())
 
+    data = []
     start_date = datetime(2024, 4, 7, 8, 0, 0)
     
     for i in range(num_records):
-        origin = random.choice(cities)
-        destination = random.choice([c for c in cities if c != origin])
+        route = random.choice(routes)
+        origin, destination, distance_km = route
         
-        # Company selection
-        if destination == "Sa Pa":
-            company_name = "Sao Việt"
-        elif destination == "Đà Lạt":
-            company_name = "Thành Bưởi"
-        elif destination == "Hội An":
-            company_name = "Gia Nguyễn"
-        else:
-            company_name = random.choice(companies)
+        company_id = random.choice(operator_keys)
 
         vehicle_type = random.choice(vehicle_types)
-        distance = routes.get((origin, destination), routes.get((destination, origin), random.randint(50, 500)))
         
         # Speed logic (50-60 km/h)
         speed = random.randint(45, 60)
-        duration_hours = distance / speed
+        duration_hours = distance_km / speed
+        
+        # Create duration string "Xh Ym"
+        dur_h = int(duration_hours)
+        dur_m = int((duration_hours - dur_h) * 60)
+        duration_str = f"{dur_h}h {dur_m}m"
         
         # Pricing logic
         base_rate = random.randint(1000, 1200)
-        price = base_rate * distance
+        price = base_rate * distance_km
         
         if "Sleeper" in vehicle_type:
             price += 50000
@@ -77,15 +65,16 @@ def generate_bus_data(num_records=100):
         
         record = {
             "id": record_id,
-            "company_name": company_name,
+            "company_id": company_id,
             "origin": origin,
             "destination": destination,
+            "distance_km": distance_km,
             "departure_time": dep_time.strftime("%Y-%m-%d %H:%M"),
             "arrival_time": arr_time.strftime("%Y-%m-%d %H:%M"),
-            "price": int(round(price, -3)), # Round to nearest 1000
+            "duration": duration_str,
+            "price": int(round(price, -3)), 
             "available_seats": available_seats,
-            "vehicle_type": vehicle_type,
-            "policy": detailed_policies.get(company_name, "Vui lòng liên hệ nhà xe để biết thêm chi tiết.")
+            "vehicle_type": vehicle_type
         }
         data.append(record)
     
@@ -97,3 +86,5 @@ if __name__ == "__main__":
     with open("data/bus_schedules.json", "w", encoding="utf-8") as f:
         json.dump(records, f, indent=2, ensure_ascii=False)
     print(f"Generated {len(records)} records in data/bus_schedules.json")
+    print("\n--- SAMPLE RECORD DEMO ---")
+    print(json.dumps(records[0], indent=2, ensure_ascii=False))

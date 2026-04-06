@@ -1,0 +1,38 @@
+{
+  "COM-101": {
+    "name": "Phương Trang",
+    "cancellation_policy": "Hủy trước 24h: Hoàn tiền 90%. Hủy từ 12-24h: Hoàn 50%. Dưới 12h: Không hoàn tiền.",
+    "luggage_allowance": "Tối đa 20kg hành lý ký gửi. Hành lý xách tay nhỏ gọn.",
+    "amenities": ["Nước uống miễn phí", "Wifi", "Cổng sạc USB", "Chăn đắp"]
+  },
+  "COM-102": {
+    "name": "Thành Bưởi",
+    "cancellation_policy": "Hủy trước 24h: Hoàn tiền 100%. Hủy từ 5-24h: Phí 10%. Dưới 5h: Không hoàn tiền.",
+    "luggage_allowance": "Tối đa 25kg. Đồ dễ vỡ cần được đóng gói kỹ.",
+    "amenities": ["Nước uống", "Khăn lạnh", "Màn hình cá nhân (xe VIP)", "Wifi"]
+  },
+  "COM-103": {
+    "name": "Sao Việt",
+    "cancellation_policy": "Hủy trước 12h: Hoàn 90%. Dưới 12h: Hoàn 70% hoặc đổi chuyến miễn phí.",
+    "luggage_allowance": "Tối đa 20kg. Hỗ trợ vận chuyển xe máy (phụ phí).",
+    "amenities": ["Wifi mạnh", "Ổ cắm điện", "Nước suối", "Gối ôm"]
+  },
+  "COM-104": {
+    "name": "Hải Vân",
+    "cancellation_policy": "Hủy trước 24h: Hoàn 95%. Hủy từ 12-24h: Hoàn 50%. Dưới 12h: Không hoàn tiền.",
+    "luggage_allowance": "Hành lý gọn gàng, tối đa 20kg. Không nhận hàng hóa cồng kềnh.",
+    "amenities": ["Dịch vụ trung chuyển tận nhà", "Free Snacks", "Wifi", "Cổng sạc"]
+  },
+  "COM-105": {
+    "name": "Hoàng Long",
+    "cancellation_policy": "Hủy trước 48h: Phí 10%. Hủy từ 24-48h: Phí 20%. Dưới 24h: Phí 50%.",
+    "luggage_allowance": "Tối đa 30kg hành lý (tuyến Bắc Nam).",
+    "amenities": ["Suất ăn miễn phí (tuyến dài)", "Wifi", "Nhà vệ sinh trên xe"]
+  },
+  "COM-106": {
+    "name": "Gia Nguyễn",
+    "cancellation_policy": "Hủy trước 2h: Phí 30%. Tiện lợi cho khách đi gấp.",
+    "luggage_allowance": "Hành lý vừa phải. Phù hợp hành khách du lịch cự ly ngắn.",
+    "amenities": ["Điều hòa", "Ghế ngồi thoải mái"]
+  }
+}
