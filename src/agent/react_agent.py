@@ -62,7 +62,7 @@ TOOLS = [
 def build_agent(model_name: Optional[str] = None, temperature: float = 0.0):
     """Create a ReAct agent bound to the bus-booking tools.
 
-    The compiled graph is tagged with the model name on its config so the
+    The compiled graph stores the model name on a private attribute so the
     runner can read it back when logging.
     """
     model_name = model_name or os.getenv("DEFAULT_MODEL", "gpt-4o")
