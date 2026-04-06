@@ -25,7 +25,7 @@ if st.sidebar.button("🗑 Xoá hội thoại"):
     st.rerun()
 
 st.caption(
-    "Tool: `search_bus_schedules`"
+    "Tools: `search_bus_schedules`, `get_bus_operator_info`"
     if mode.startswith("Agent")
     else "Không có tool — gọi LLM thuần"
 )

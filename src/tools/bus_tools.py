@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 BUS_SCHEDULES_PATH = DATA_DIR / "bus_schedules.json"
+OPERATORS_PATH = DATA_DIR / "operators.json"
 
 _MISSING_OD_MSG = (
     "Lỗi: Thiếu điểm đi hoặc điểm đến. "
@@ -16,6 +17,10 @@ _MISSING_OD_MSG = (
 _NO_MATCH_MSG = (
     "Không tìm thấy chuyến xe nào khớp với toàn bộ các tiêu chí. "
     "Hãy thông báo cho người dùng và gợi ý họ thay đổi giờ đi, loại xe hoặc mức giá."
+)
+_OPERATOR_NOT_FOUND_MSG = (
+    "Lỗi: Mã nhà xe '{company_id}' không tồn tại trong hệ thống. "
+    "Hãy kiểm tra lại thông tin chuyến xe."
 )
 
 
@@ -95,6 +100,41 @@ def search_bus_schedules(
         return _NO_MATCH_MSG
 
     return json.dumps(matches, ensure_ascii=False)
+
+
+def _load_operators() -> Dict[str, Dict[str, Any]]:
+    with OPERATORS_PATH.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+class GetBusOperatorInfoInput(BaseModel):
+    company_id: str = Field(
+        ..., description="Mã công ty nhà xe (VD: 'COM-101')."
+    )
+
+
+@tool("get_bus_operator_info", args_schema=GetBusOperatorInfoInput)
+def get_bus_operator_info(company_id: str) -> str:
+    """Look up a bus operator's policies, luggage rules, and amenities by company_id.
+
+    Use this whenever the user asks about cancellation policy, luggage
+    allowance, or amenities of a specific bus company. The `company_id` is
+    the `COM-xxx` code that appears on the bus records returned by
+    `search_bus_schedules`.
+
+    Returns a JSON string with {name, cancellation_policy, luggage_allowance,
+    amenities}, or a Vietnamese fallback message when the id is unknown.
+    """
+    cid = (company_id or "").strip()
+    if not cid:
+        return _OPERATOR_NOT_FOUND_MSG.format(company_id=company_id)
+
+    operators = _load_operators()
+    record = operators.get(cid)
+    if not record:
+        return _OPERATOR_NOT_FOUND_MSG.format(company_id=cid)
+
+    return json.dumps({"company_id": cid, **record}, ensure_ascii=False)
 
 
 class BusBookingTools:

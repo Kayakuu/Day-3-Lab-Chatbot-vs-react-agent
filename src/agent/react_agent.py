@@ -16,17 +16,20 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from src.telemetry.loguru_logger import log_agent_cycle
-from src.tools.bus_tools import search_bus_schedules
+from src.tools.bus_tools import get_bus_operator_info, search_bus_schedules
 
 SYSTEM_PROMPT = (
-    "Bạn là trợ lý đặt vé xe khách tại Việt Nam. "
-    "Khi người dùng muốn tra cứu chuyến xe, hãy gọi tool `search_bus_schedules` "
-    "với điểm đi và điểm đến (bắt buộc), kèm các bộ lọc tùy chọn nếu người dùng "
-    "có nhắc tới (ngày khởi hành YYYY-MM-DD, giá tối đa, loại xe, số ghế tối thiểu). "
-    "Nếu thiếu điểm đi hoặc điểm đến, hãy hỏi lại người dùng. "
-    "Sau khi nhận kết quả từ tool, tóm tắt ngắn gọn các chuyến phù hợp bằng tiếng Việt "
-    "(mã chuyến, giờ khởi hành, giá, số ghế trống, loại xe). "
-    "Nếu tool trả về thông báo lỗi/không có chuyến, hãy chuyển tiếp ý đó cho người dùng."
+    "Bạn là trợ lý đặt vé xe khách tại Việt Nam.\n\n"
+    "Bạn có các tool sau:\n"
+    "1. `search_bus_schedules(origin, destination, departure_date?, max_price?, vehicle_type?, min_available_seats?)` "
+    "— tra cứu chuyến xe. `origin`/`destination` bắt buộc; chỉ truyền bộ lọc khi người dùng nhắc tới. "
+    "Định dạng ngày là YYYY-MM-DD. Nếu thiếu điểm đi hoặc điểm đến, hãy hỏi lại người dùng.\n"
+    "2. `get_bus_operator_info(company_id)` — lấy chính sách hoàn vé, hành lý, tiện ích của nhà xe. "
+    "`company_id` là mã 'COM-xxx' lấy từ kết quả của `search_bus_schedules`. "
+    "Nếu người dùng nói tên nhà xe mà bạn chưa biết company_id, hãy dùng `search_bus_schedules` trước để tìm.\n\n"
+    "Quy tắc trả lời: sau khi nhận kết quả từ tool, tóm tắt ngắn gọn bằng tiếng Việt. "
+    "Với danh sách chuyến xe, liệt kê mã chuyến, giờ khởi hành, giá, số ghế trống, loại xe. "
+    "Nếu tool trả về thông báo lỗi hoặc không có kết quả, hãy chuyển tiếp ý đó cho người dùng một cách lịch sự."
 )
 
 BARE_SYSTEM_PROMPT = (
@@ -34,7 +37,7 @@ BARE_SYSTEM_PROMPT = (
     "Trả lời ngắn gọn câu hỏi của người dùng dựa trên kiến thức của bạn."
 )
 
-TOOLS = [search_bus_schedules]
+TOOLS = [search_bus_schedules, get_bus_operator_info]
 
 
 def build_agent(model_name: Optional[str] = None, temperature: float = 0.0):
