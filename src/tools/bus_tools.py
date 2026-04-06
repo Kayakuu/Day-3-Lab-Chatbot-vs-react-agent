@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
+import requests
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
@@ -13,6 +14,11 @@ BUS_SCHEDULES_PATH = DATA_DIR / "bus_schedules.json"
 OPERATORS_PATH = DATA_DIR / "operators.json"
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+
+OPENWEATHER_URL_CURRENT = "https://api.openweathermap.org/data/2.5/weather"
+OPENWEATHER_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast"
+
+EXTERNAL_TIMEOUT_S = 6.0
 
 _MISSING_OD_MSG = (
     "Lỗi: Thiếu điểm đi hoặc điểm đến. "
@@ -29,6 +35,14 @@ _OPERATOR_NOT_FOUND_MSG = (
 _DATETIME_ERROR_MSG = (
     "Lỗi: Không thể lấy được thời gian hệ thống. "
     "Hãy yêu cầu người dùng cung cấp cụ thể ngày giờ họ muốn đi thay vì nói 'hôm nay'."
+)
+_WEATHER_NOT_FOUND_MSG = (
+    "Lỗi: Không tìm thấy dữ liệu thời tiết cho '{location}'. "
+    "Hãy thông báo cho người dùng không thể kiểm tra thời tiết lúc này."
+)
+_WEATHER_TIMEOUT_MSG = (
+    "Lỗi gián đoạn kết nối với trạm thời tiết. "
+    "Bỏ qua thông tin thời tiết và tiếp tục hỗ trợ đặt vé."
 )
 
 
@@ -160,6 +174,92 @@ def get_current_datetime() -> str:
         return datetime.now(VN_TZ).strftime("%Y-%m-%d %H:%M:%S")
     except Exception:
         return _DATETIME_ERROR_MSG
+
+
+class GetRouteWeatherInput(BaseModel):
+    location: str = Field(
+        ..., description="Tên thành phố/tỉnh (VD: 'Đà Lạt', 'Sa Pa')."
+    )
+    date: Optional[str] = Field(
+        None,
+        description="Ngày cần xem dự báo (YYYY-MM-DD). Bỏ trống = hôm nay.",
+    )
+
+
+def _format_weather(location: str, date_label: str, payload: Dict[str, Any]) -> str:
+    main = payload.get("main", {}) or {}
+    weather_list = payload.get("weather") or []
+    description = (weather_list[0].get("description") if weather_list else "") or "không rõ"
+    temp = main.get("temp")
+    humidity = main.get("humidity")
+    wind = (payload.get("wind") or {}).get("speed")
+    temp_str = f"{temp:.1f}" if isinstance(temp, (int, float)) else "?"
+    wind_str = f"{wind:.1f}" if isinstance(wind, (int, float)) else "?"
+    humidity_str = f"{humidity}" if humidity is not None else "?"
+    return (
+        f"{location} ({date_label}): nhiệt độ {temp_str}°C, {description}, "
+        f"gió {wind_str} m/s, độ ẩm {humidity_str}%."
+    )
+
+
+@tool("get_route_weather", args_schema=GetRouteWeatherInput)
+def get_route_weather(location: str, date: Optional[str] = None) -> str:
+    """Fetch current weather or short-term forecast for a Vietnamese city.
+
+    Use this only when the user asks about weather, road conditions, or
+    whether it will rain on the travel route. `date` is optional (YYYY-MM-DD);
+    if omitted, returns the current conditions. Forecast supports up to 5
+    days ahead (OpenWeather free tier).
+
+    Returns a short Vietnamese weather description, or a Vietnamese fallback
+    message when the location is unknown or the API is unreachable.
+    """
+    loc = (location or "").strip()
+    if not loc:
+        return _WEATHER_NOT_FOUND_MSG.format(location=location)
+
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    if not api_key:
+        return _WEATHER_TIMEOUT_MSG
+
+    today_str = datetime.now(VN_TZ).strftime("%Y-%m-%d")
+    use_forecast = bool(date) and date != today_str
+
+    params = {"q": loc, "appid": api_key, "units": "metric", "lang": "vi"}
+    url = OPENWEATHER_URL_FORECAST if use_forecast else OPENWEATHER_URL_CURRENT
+
+    try:
+        resp = requests.get(url, params=params, timeout=EXTERNAL_TIMEOUT_S)
+    except (requests.Timeout, requests.ConnectionError, requests.RequestException):
+        return _WEATHER_TIMEOUT_MSG
+
+    if resp.status_code == 404:
+        return _WEATHER_NOT_FOUND_MSG.format(location=loc)
+    if resp.status_code != 200:
+        return _WEATHER_TIMEOUT_MSG
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return _WEATHER_TIMEOUT_MSG
+
+    if not use_forecast:
+        return _format_weather(loc, "hôm nay", data)
+
+    slots = [s for s in data.get("list", []) if str(s.get("dt_txt", "")).startswith(date)]
+    if not slots:
+        return _WEATHER_NOT_FOUND_MSG.format(location=loc)
+
+    def _distance_to_noon(slot: Dict[str, Any]) -> int:
+        txt = str(slot.get("dt_txt", ""))
+        try:
+            hour = int(txt.split(" ")[1].split(":")[0])
+        except (IndexError, ValueError):
+            hour = 0
+        return abs(hour - 12)
+
+    best = min(slots, key=_distance_to_noon)
+    return _format_weather(loc, date, best)
 
 
 class BusBookingTools:

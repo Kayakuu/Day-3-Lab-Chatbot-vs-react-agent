@@ -19,6 +19,7 @@ from src.telemetry.loguru_logger import log_agent_cycle
 from src.tools.bus_tools import (
     get_bus_operator_info,
     get_current_datetime,
+    get_route_weather,
     search_bus_schedules,
 )
 
@@ -32,7 +33,9 @@ SYSTEM_PROMPT = (
     "`company_id` là mã 'COM-xxx' lấy từ kết quả của `search_bus_schedules`. "
     "Nếu người dùng nói tên nhà xe mà bạn chưa biết company_id, hãy dùng `search_bus_schedules` trước để tìm.\n"
     "3. `get_current_datetime()` — lấy ngày giờ hiện tại theo giờ Việt Nam. "
-    "BẮT BUỘC gọi tool này TRƯỚC khi gọi các tool khác nếu người dùng nhắc 'hôm nay', 'ngày mai', 'tối nay', 'sắp tới', 'bây giờ'.\n\n"
+    "BẮT BUỘC gọi tool này TRƯỚC khi gọi các tool khác nếu người dùng nhắc 'hôm nay', 'ngày mai', 'tối nay', 'sắp tới', 'bây giờ'.\n"
+    "4. `get_route_weather(location, date?)` — xem thời tiết cho một địa điểm. "
+    "Chỉ gọi khi người dùng hỏi về thời tiết hoặc tình trạng đường sá.\n\n"
     "Quy tắc trả lời: sau khi nhận kết quả từ tool, tóm tắt ngắn gọn bằng tiếng Việt. "
     "Với danh sách chuyến xe, liệt kê mã chuyến, giờ khởi hành, giá, số ghế trống, loại xe. "
     "Nếu tool trả về thông báo lỗi hoặc không có kết quả, hãy chuyển tiếp ý đó cho người dùng một cách lịch sự."
@@ -43,7 +46,12 @@ BARE_SYSTEM_PROMPT = (
     "Trả lời ngắn gọn câu hỏi của người dùng dựa trên kiến thức của bạn."
 )
 
-TOOLS = [search_bus_schedules, get_bus_operator_info, get_current_datetime]
+TOOLS = [
+    search_bus_schedules,
+    get_bus_operator_info,
+    get_current_datetime,
+    get_route_weather,
+]
 
 
 def build_agent(model_name: Optional[str] = None, temperature: float = 0.0):
