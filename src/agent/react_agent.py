@@ -1,8 +1,8 @@
 """ReAct agent wired with the bus-booking tools.
 
 Uses LangGraph's prebuilt `create_react_agent` so the tool-calling loop,
-message history, and observation feedback are all handled for us. Only the
-first tool (`search_bus_schedules`) is registered for now.
+message history, and observation feedback are all handled for us. The
+agent is registered with the bus-booking tools listed in `TOOLS`.
 """
 
 from __future__ import annotations
