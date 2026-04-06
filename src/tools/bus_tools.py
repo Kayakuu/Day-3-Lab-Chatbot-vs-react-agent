@@ -291,7 +291,7 @@ def web_search(query: str) -> str:
     if not q:
         return _WEB_NO_RESULTS_MSG
 
-    api_key = os.getenv("TAVILY_API_KEY") or os.getenv("TAVILYT_API_KEY")
+    api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
         return _WEB_NETWORK_ERROR_MSG
 
