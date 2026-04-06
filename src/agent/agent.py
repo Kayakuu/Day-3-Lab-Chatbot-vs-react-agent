@@ -25,7 +25,8 @@ class ReActAgent:
         """
         tool_descriptions = "\n".join([f"- {t['name']}: {t['description']}" for t in self.tools])
         return f"""
-        You are an intelligent assistant. You have access to the following tools:
+        You are a helpful and efficient Bus Booking Assistant (Xe Khách Assistant).
+        You have access to the following tools to help users search for routes and book tickets:
         {tool_descriptions}
 
         Use the following format:
@@ -33,7 +34,9 @@ class ReActAgent:
         Action: tool_name(arguments)
         Observation: result of the tool call.
         ... (repeat Thought/Action/Observation if needed)
-        Final Answer: your final response.
+        Final Answer: your final response to the user.
+
+        Remember to check for seat availability before confirming a booking.
         """
 
     def run(self, user_input: str) -> str:
@@ -45,23 +48,26 @@ class ReActAgent:
         """
         logger.log_event("AGENT_START", {"input": user_input, "model": self.llm.model_name})
         
-        current_prompt = user_input
+        # This will store the running conversation including thoughts and observations
+        current_context = ""
         steps = 0
 
         while steps < self.max_steps:
-            # TODO: Generate LLM response
-            # result = self.llm.generate(current_prompt, system_prompt=self.get_system_prompt())
+            # TODO: Step 1 - Send current_context to LLM with the system prompt
+            # result = self.llm.generate(user_input + current_context, system_prompt=self.get_system_prompt())
             
-            # TODO: Parse Thought/Action from result
+            # TODO: Step 2 - Parse Thought and Action (Regex is helpful here)
             
-            # TODO: If Action found -> Call tool -> Append Observation
+            # TODO: Step 3 - If Action found:
+            #   - Call self._execute_tool(tool_name, args)
+            #   - Update current_context with Thought, Action, and Observation
             
-            # TODO: If Final Answer found -> Break loop
+            # TODO: Step 4 - If 'Final Answer' found -> return it
             
             steps += 1
             
         logger.log_event("AGENT_END", {"steps": steps})
-        return "Not implemented. Fill in the TODOs!"
+        return "Agent loop not yet implemented. Please complete Step 1-4 in run()!"
 
     def _execute_tool(self, tool_name: str, args: str) -> str:
         """
