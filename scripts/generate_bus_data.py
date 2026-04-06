@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 def generate_bus_data(num_records=50):
     cities = ["Hanoi", "Saigon", "Danang", "Dalat", "Sapa", "Nha Trang", "Hai Phong", "Hue"]
+    operators = ["Phuong Trang", "Thanh Buoi", "Hai Van", "Sao Viet", "Hoang Long"]
     bus_types = ["Standard", "Sleeper", "VIP Limousine"]
     
     data = []
@@ -25,6 +26,14 @@ def generate_bus_data(num_records=50):
         origin = random.choice(cities)
         destination = random.choice([c for c in cities if c != origin])
         
+        # Route-biased operator selection
+        if destination == "Sapa":
+            operator = "Sao Viet"
+        elif destination == "Dalat":
+            operator = "Thanh Buoi"
+        else:
+            operator = random.choice(operators)
+
         bus_type = random.choice(bus_types)
         
         # Calculate price based on route distance (dummy logic) or random
@@ -54,6 +63,7 @@ def generate_bus_data(num_records=50):
         
         record = {
             "bus_id": bus_id,
+            "operator": operator,
             "origin": origin,
             "destination": destination,
             "bus_type": bus_type,

@@ -1,0 +1,32 @@
+{
+  "Phuong Trang": {
+    "cancellation_policy": "Hủy trước 24h: Hoàn tiền 90%. Hủy từ 12-24h: Hoàn 50%. Dưới 12h: Không hoàn tiền.",
+    "luggage_allowance": "Tối đa 20kg hành lý ký gửi. Hành lý xách tay nhỏ gọn.",
+    "amenities": ["Nước uống miễn phí", "Wifi", "Cổng sạc USB", "Chăn đắp"],
+    "notes": "Vui lòng có mặt tại bến xe trước 30 phút."
+  },
+  "Thanh Buoi": {
+    "cancellation_policy": "Hủy trước 24h: Hoàn tiền 100%. Hủy từ 5-24h: Phí 10%. Dưới 5h: Không hoàn tiền.",
+    "luggage_allowance": "Tối đa 25kg. Đồ dễ vỡ cần được đóng gói kỹ.",
+    "amenities": ["Nước uống", "Khăn lạnh", "Màn hình cá nhân (xe VIP)", "Wifi"],
+    "notes": "Chuyên tuyến Sài Gòn - Đà Lạt chất lượng cao."
+  },
+  "Sao Viet": {
+    "cancellation_policy": "Hủy trước 12h: Hoàn 90%. Dưới 12h: Hoàn 70% hoặc đổi chuyến miễn phí.",
+    "luggage_allowance": "Tối đa 20kg. Hỗ trợ vận chuyển xe máy (phụ phí).",
+    "amenities": ["Wifi mạnh", "Ổ cắm điện", "Nước suối", "Gối ôm"],
+    "notes": "Chuyên tuyến Hà Nội - Lào Cai - Sapa."
+  },
+  "Hai Van": {
+    "cancellation_policy": "Hủy trước 24h: Hoàn 95%. Hủy từ 12-24h: Hoàn 50%. Dưới 12h: Không hoàn tiền.",
+    "luggage_allowance": "Hành lý gọn gàng, tối đa 20kg. Không nhận hàng hóa cồng kềnh.",
+    "amenities": ["Dịch vụ trung chuyển tận nhà", "Free Snacks", "Wifi", "Cổng sạc"],
+    "notes": "Dịch vụ Limousine cao cấp."
+  },
+  "Hoang Long": {
+    "cancellation_policy": "Hủy trước 48h: Phí 10%. Hủy từ 24-48h: Phí 20%. Dưới 24h: Phí 50%.",
+    "luggage_allowance": "Tối đa 30kg hành lý (tuyến Bắc Nam).",
+    "amenities": ["Suất ăn miễn phí (tuyến dài)", "Wifi", "Nhà vệ sinh trên xe"],
+    "notes": "Chuyên các tuyến đường dài xuyên Việt."
+  }
+}

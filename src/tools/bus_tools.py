@@ -32,3 +32,11 @@ class BusBookingTools:
         """
         # TODO: Member 2 (Tool Dev) to implement booking registration here
         return f"Booking {seats} seats on {bus_id} for {customer_name}... [TODO: Implement Logic]"
+
+    def get_operator_policy(self, operator_name: str) -> str:
+        """
+        Get the cancellation and luggage policy for a specific bus operator.
+        Example action: get_operator_policy("Phuong Trang")
+        """
+        # TODO: Member 2 (Tool Dev) to implement policy lookup from JSON here
+        return f"Fetching policy for {operator_name}... [TODO: Implement Logic]"
