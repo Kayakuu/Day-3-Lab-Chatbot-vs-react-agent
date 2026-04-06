@@ -17,6 +17,7 @@ VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
 OPENWEATHER_URL_CURRENT = "https://api.openweathermap.org/data/2.5/weather"
 OPENWEATHER_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast"
+TAVILY_URL = "https://api.tavily.com/search"
 
 EXTERNAL_TIMEOUT_S = 6.0
 
@@ -43,6 +44,14 @@ _WEATHER_NOT_FOUND_MSG = (
 _WEATHER_TIMEOUT_MSG = (
     "Lỗi gián đoạn kết nối với trạm thời tiết. "
     "Bỏ qua thông tin thời tiết và tiếp tục hỗ trợ đặt vé."
+)
+_WEB_NO_RESULTS_MSG = (
+    "Không tìm thấy thông tin trên mạng cho truy vấn này. "
+    "Hãy báo cho người dùng rằng bạn chỉ là trợ lý đặt vé và không có thông tin ngoài luồng này."
+)
+_WEB_NETWORK_ERROR_MSG = (
+    "Lỗi kết nối công cụ tìm kiếm. "
+    "Hãy xin lỗi người dùng và khuyên họ tự tra cứu trên Google."
 )
 
 
@@ -260,6 +269,70 @@ def get_route_weather(location: str, date: Optional[str] = None) -> str:
 
     best = min(slots, key=_distance_to_noon)
     return _format_weather(loc, date, best)
+
+
+class WebSearchInput(BaseModel):
+    query: str = Field(..., description="Câu hỏi hoặc từ khoá cần tra cứu.")
+
+
+@tool("web_search", args_schema=WebSearchInput)
+def web_search(query: str) -> str:
+    """Search the web via Tavily for information not contained in the local data.
+
+    Use this only for auxiliary questions the other tools can't answer, e.g.
+    "Quán ăn gần bến xe X", "Đèo Y hôm nay có cấm đường không?". Do NOT use
+    this to look up bus schedules — always prefer `search_bus_schedules` for
+    trips.
+
+    Returns a short Vietnamese summary of results, or a Vietnamese fallback
+    message when there are no results or the API is unreachable.
+    """
+    q = (query or "").strip()
+    if not q:
+        return _WEB_NO_RESULTS_MSG
+
+    api_key = os.getenv("TAVILY_API_KEY") or os.getenv("TAVILYT_API_KEY")
+    if not api_key:
+        return _WEB_NETWORK_ERROR_MSG
+
+    payload = {
+        "api_key": api_key,
+        "query": q,
+        "max_results": 3,
+        "search_depth": "basic",
+        "include_answer": True,
+    }
+
+    try:
+        resp = requests.post(TAVILY_URL, json=payload, timeout=EXTERNAL_TIMEOUT_S)
+    except (requests.Timeout, requests.ConnectionError, requests.RequestException):
+        return _WEB_NETWORK_ERROR_MSG
+
+    if resp.status_code != 200:
+        return _WEB_NETWORK_ERROR_MSG
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return _WEB_NETWORK_ERROR_MSG
+
+    answer = (data.get("answer") or "").strip()
+    results = data.get("results") or []
+
+    if answer:
+        return answer
+
+    if results:
+        lines = []
+        for r in results[:3]:
+            title = (r.get("title") or "").strip()
+            content = (r.get("content") or "").strip()
+            if title or content:
+                lines.append(f"- {title}: {content}")
+        if lines:
+            return "\n".join(lines)
+
+    return _WEB_NO_RESULTS_MSG
 
 
 class BusBookingTools:

@@ -21,6 +21,7 @@ from src.tools.bus_tools import (
     get_current_datetime,
     get_route_weather,
     search_bus_schedules,
+    web_search,
 )
 
 SYSTEM_PROMPT = (
@@ -35,7 +36,10 @@ SYSTEM_PROMPT = (
     "3. `get_current_datetime()` — lấy ngày giờ hiện tại theo giờ Việt Nam. "
     "BẮT BUỘC gọi tool này TRƯỚC khi gọi các tool khác nếu người dùng nhắc 'hôm nay', 'ngày mai', 'tối nay', 'sắp tới', 'bây giờ'.\n"
     "4. `get_route_weather(location, date?)` — xem thời tiết cho một địa điểm. "
-    "Chỉ gọi khi người dùng hỏi về thời tiết hoặc tình trạng đường sá.\n\n"
+    "Chỉ gọi khi người dùng hỏi về thời tiết hoặc tình trạng đường sá.\n"
+    "5. `web_search(query)` — tìm thông tin ngoài hệ thống (quán ăn gần bến, tình trạng đèo, v.v.). "
+    "KHÔNG dùng tool này để tra cứu chuyến xe — luôn ưu tiên `search_bus_schedules`. "
+    "Với câu hỏi hoàn toàn ngoài lĩnh vực (VD: dạy toán, tin tức), hãy từ chối lịch sự thay vì gọi tool.\n\n"
     "Quy tắc trả lời: sau khi nhận kết quả từ tool, tóm tắt ngắn gọn bằng tiếng Việt. "
     "Với danh sách chuyến xe, liệt kê mã chuyến, giờ khởi hành, giá, số ghế trống, loại xe. "
     "Nếu tool trả về thông báo lỗi hoặc không có kết quả, hãy chuyển tiếp ý đó cho người dùng một cách lịch sự."
@@ -51,6 +55,7 @@ TOOLS = [
     get_bus_operator_info,
     get_current_datetime,
     get_route_weather,
+    web_search,
 ]
 
 
