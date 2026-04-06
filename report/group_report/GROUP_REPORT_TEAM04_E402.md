@@ -96,5 +96,4 @@ Hệ thống sử dụng vòng lặp suy luận để giải quyết các yêu c
 
 ---
 
-> [!NOTE]
-> Submit this report by renaming it to `GROUP_REPORT_[TEAM_NAME].md` and placing it in this folder.
+> Link GIT: https://github.com/Kayakuu/Day-3-Lab-Chatbot-vs-react-agent

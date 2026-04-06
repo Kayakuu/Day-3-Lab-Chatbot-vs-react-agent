@@ -49,5 +49,4 @@
 
 ---
 
-> [!NOTE]
-> Submit this report by renaming it to `REPORT_[YOUR_NAME].md` and placing it in this folder.
+> Link GIT: https://github.com/Kayakuu/Day-3-Lab-Chatbot-vs-react-agent
